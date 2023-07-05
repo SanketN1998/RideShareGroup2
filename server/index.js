@@ -4,6 +4,9 @@ const mongoose =  require('mongoose');
 const cors = require('cors');
 const User = require('./model/users');
 const PostDriver = require('./model/PostDriver');
+const RideReq = require('./model/RideRequest');
+const ContactUs = require('./model/Contactus');
+const BookRides = require('./model/BookRide');
 
 
 
@@ -27,8 +30,15 @@ app.get('/', (req, res) => {
 );
 app.post('/driverpost', async (req, res) => {
     let data = await req.body;
-    console.log("data",data)
     const newPost = new PostDriver(data);
+    await newPost.save();
+    res.send(newPost);
+}
+);
+app.post('/ridereq', async (req, res) => {
+    let data = await req.body;
+    console.log("data",data)
+    const newPost = new RideReq(data);
     await newPost.save();
     res.send(newPost);
 }
@@ -36,6 +46,32 @@ app.post('/driverpost', async (req, res) => {
 app.get('/posts', async (req, res) => {
         let data = await PostDriver.find();
         res.send(data);
+    }
+);
+app.get('/rideposts', async (req, res) => {
+    let data = await RideReq.find();
+    res.send(data);
+}
+);
+app.post('/contact', async (req, res) => {
+    let data = await req.body;
+    console.log("data",data)
+    const newPost = new ContactUs(data);
+    await newPost.save();
+    res.send(newPost);
+}
+);
+app.put('/book/:id', async (req, res) => {
+    console.log("request params===",req.params, {seats: `${req.body.seats}`});
+    let result = await PostDriver.findByIdAndUpdate(req.params.id, req.body);
+    console.log("result",result);
+    res.send(result);
+    }
+);
+app.post('/bookride', async (req, res) => {
+    let newBookRide = new BookRides(req.body);
+    await newBookRide.save();
+    res.send(newBookRide);
     }
 );
 // app.get('/users', (req, res) => {
@@ -53,7 +89,19 @@ app.post('/users', (req, res) => {
         console.log("user",response);
         res.send(response);
     })
-}
+    }
+);
+app.post('/signin', async (req, res) => {
+    console.log("users signin,",req.body)
+    const newUser = await User.findOne({email: req.body.email})
+    if(!!newUser && newUser.password === req.body.password)
+    {
+        res.send(newUser)
+    }
+    else {
+        res.sendStatus(404)
+    }
+    }
 );
 app.put('/users/:id', (req, res) => {
     User.findByIdAndUpdate(req.params.id, req.body, (err, user) => {
