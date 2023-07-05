@@ -1,6 +1,6 @@
 const mongoose =  require('mongoose');
 const Schema = mongoose.Schema;
-const driverPostSchema = new Schema({
+const bookRideSchema = new Schema({
     from: String,
     to: String,
     date: String,
@@ -9,7 +9,8 @@ const driverPostSchema = new Schema({
     seats: String,
     pickupLoc: String,
     dropOffLoc: String,
+    driverId: Object,
     userId: String,
 });
-const PostDriver = mongoose.model('PostDriver', driverPostSchema);
-module.exports = PostDriver;
+const BookRides = mongoose.model('BookRides', bookRideSchema);
+module.exports = BookRides;
