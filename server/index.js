@@ -4,6 +4,12 @@ const mongoose =  require('mongoose');
 const cors = require('cors');
 const User = require('./model/users');
 const PostDriver = require('./model/PostDriver');
+const RideReq = require('./model/RideRequest');
+const ContactUs = require('./model/Contactus');
+const BookRides = require('./model/BookRide');
+
+const bcrypt = require('bcrypt');
+const saltRounds = 10;
 
 
 
@@ -27,8 +33,15 @@ app.get('/', (req, res) => {
 );
 app.post('/driverpost', async (req, res) => {
     let data = await req.body;
-    console.log("data",data)
     const newPost = new PostDriver(data);
+    await newPost.save();
+    res.send(newPost);
+}
+);
+app.post('/ridereq', async (req, res) => {
+    let data = await req.body;
+    console.log("data",data)
+    const newPost = new RideReq(data);
     await newPost.save();
     res.send(newPost);
 }
@@ -36,6 +49,42 @@ app.post('/driverpost', async (req, res) => {
 app.get('/posts', async (req, res) => {
         let data = await PostDriver.find();
         res.send(data);
+    }
+);
+app.get('/rideposts', async (req, res) => {
+    let data = await RideReq.find();
+    res.send(data);
+}
+);
+app.post('/contact', async (req, res) => {
+    let data = await req.body;
+    console.log("data",data)
+    const newPost = new ContactUs(data);
+    await newPost.save();
+    res.send(newPost);
+}
+);
+app.put('/book/:id', async (req, res) => {
+    console.log("request params===",req.params, {seats: `${req.body.seats}`});
+    let result = await PostDriver.findByIdAndUpdate(req.params.id, req.body);
+    console.log("result",result);
+    res.send(result);
+    }
+);
+app.post('/bookride', async (req, res) => {
+    let newBookRide = new BookRides(req.body);
+    await newBookRide.save();
+    res.send(newBookRide);
+    }
+);
+app.get('/getbookrides/:id', async (req, res) => {
+    console.log("req params===",req.params);
+       let data = await  BookRides.find({}).where("userId", req.params.id).
+              exec();
+              console.log("rides===",data)
+    // let newBookRide = await BookRides.find({ userId: { $in: req.params.id } })
+    // console.log("newBookRide",newBookRide)
+    // res.send(newBookRide);
     }
 );
 // app.get('/users', (req, res) => {
@@ -47,30 +96,63 @@ app.get('/posts', async (req, res) => {
 // }
 // );
 app.post('/users', (req, res) => {
-    console.log("users,",req.body)
-    const newUser = new User(req.body);
+    console.log("users,",req.body);
+    bcrypt.hash(req.body.password, saltRounds, function(err, hash) {
+    // Store hash in your password DB.
+    const user = {
+        email: req.body.email,
+        password: hash
+    }
+    const newUser = new User(user);
     newUser.save().then((response) => {
         console.log("user",response);
         res.send(response);
     })
-}
-);
-app.put('/users/:id', (req, res) => {
-    User.findByIdAndUpdate(req.params.id, req.body, (err, user) => {
-        if (err) throw err;
-        res.send(user);
+});
+    
     }
-    );
-}
 );
-app.delete('/users/:id', (req, res) => {
-    User.findByIdAndRemove(req.params.id, (err, user) => {
-        if (err) throw err;
-        res.send(user);
+app.post('/signin', async (req, res) => {
+    console.log("users signin,",req.body)
+    const newUser = await User.findOne({email: req.body.email})
+    bcrypt.compare(req.body.password, newUser.password, function(err, result) {
+        // result == true
+        console.log("result",result)
+        if(result === true){
+            res.send(newUser)
+        }
+        else {
+            res.sendStatus(404)
+        }
+    });
+    // if(!!newUser &&  === req.body.password)
+    // {
+    //     res.send(newUser)
+    // }
+    // else {
+    //     res.sendStatus(404)
+    // }
     }
-    );
+);
+app.put('/users/update/:id', async(req, res) => {
+    console.log("users update,",req.body);
+    await User.findByIdAndUpdate(req.params.id, req.body)
+    let updatedData = await User.findById(req.params.id);
+    console.log("data",updatedData)
+    res.send(updatedData);
+    }
+);
+app.get('/user/:id', async (req, res) => {
+    let user = await User.findById(req.params.id);
+    console.log("user===",user)
+    res.send(user)
 }
 );
+// app.post('/users/update', async (req, res) => {
+//     console.log("users,",req.body);
+// }
+    
+// );
 app.listen(port, () => {
     console.log(`Example app listening at http://localhost:${port}`);
 }
